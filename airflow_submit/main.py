@@ -3,60 +3,115 @@ import argparse
 import os
 import constants
 import ConfigParser
+import uuid
+import json
+import connect
+import ruamel.yaml as yaml
+from check_func import check_job
+
+
+def read_config(config_file):
+    """Reads configuration file"""
+    config = ConfigParser.ConfigParser()
+    config.read(config_file)
+    return config
+
+# SubParsers function
+def submit(args, conf):
+    workflow_dest = os.path.join(conf.get('cwl','cwl_workflows'), args.uid + os.path.splitext(args.workflow)[1])
+    job_dest = os.path.join(conf.get('cwl','cwl_jobs'), constants.JOBS_NEW,  args.uid + os.path.splitext(args.job)[1])
+    os.rename(args.workflow, workflow_dest)
+    os.rename(args.job, job_dest)
+    return {"uid": args.uid,
+            "worflow": workflow_dest,
+            "job": job_dest}
+
+
+def check(args, conf):
+    db_connection=connect.DbConnect(conf)
+    status, tasks = check_job (db_connection, args.uid, conf.get('cwl','cwl_jobs'))
+    return {'uid':    args.uid,
+            'status': status,
+            'tasks':  tasks
+    }
+
+
+def gen_error_status(args, ex):
+    return {"uid": args.uid,
+            "error": str(ex)}
+
+
+def gen_uid (args):
+    try:
+        with open(args.job, 'r') as f:
+            job = yaml.safe_load(f) or {}
+            uid = job.get("uid") or args.uid or uuid.uuid4()
+            return str(uid)
+    except:
+        return str(args.uid)
+
+
+def normalize(args):
+    normalized_args = {}
+    for key,value in args.__dict__.iteritems():
+        if key in ['config', 'workflow', 'job', 'output']:
+            normalized_args[key] = value if not value or os.path.isabs(value) else os.path.join(os.getcwd(), value)
+        elif key=='uid':
+            normalized_args['uid'] = gen_uid (args)
+        else:
+            normalized_args[key]=value
+    return argparse.Namespace (**normalized_args)
+
+
+def export_to_file(filepath, data):
+    with open(filepath, 'w') as output_stream:
+        output_stream.write(json.dumps(data, indent=4))
+
 
 def arg_parser():
     """Returns argument parser"""
-    parser = argparse.ArgumentParser(description='Airflow-submit, 2017')
-    parser.add_argument ("-w", "--workflow", help="Path to workflow file", required=True)
-    parser.add_argument ("-j", "--job", help="Path to job file", required=True)
-    parser.add_argument("-u", "--uid", help="Unique ID for submitted job", default=None)
+    # parent_parser
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument("-o", "--output", help="Save output to file", default=None)
+    parent_parser.add_argument("-c", "--config", help="Path to configuration file", default=constants.DEFAULT_CONFIG)
 
-    parser.add_argument("-c", "--config", help="Path to configuration file", default=None)
-    parser.add_argument("-s", "--workflow-folder", help="Path to the folder to save workflow", default=None)
-    parser.add_argument("-t", "--job-folder", help="Path to the folder to save job file", default=None)
+    # general_parser
+    general_parser = argparse.ArgumentParser(description='Airflow-submit')
+    subparsers = general_parser.add_subparsers()
+    subparsers.required = True
+    submit_parser = subparsers.add_parser(submit.__name__, help="Submit new job", parents=[parent_parser])
+    check_parser =  subparsers.add_parser(check.__name__,  help="Check status by uid", parents=[parent_parser])
 
-    parser.add_argument("-o", "--output", help="Save output to file", default=None)
-    return parser
+    # submit_parser
+    submit_parser.add_argument ("-u", "--uid", help="Unique ID for submitted job", default=None)
+    submit_parser.add_argument ("-w", "--workflow", help="Path to workflow file", required=True)
+    submit_parser.add_argument ("-j", "--job", help="Path to job file", required=True)
+    submit_parser.set_defaults(func=submit)
+
+    # check_parser
+    check_parser.add_argument("-u", "--uid", help="Unique ID for submitted job", required=True)
+    check_parser.set_defaults(func=check)
+
+    return general_parser
 
 
 def main(argsl=None):
     if argsl is None:
         argsl = sys.argv[1:]
-    args, _ = arg_parser().parse_known_args(argsl)
-    argv=args.__dict__
-
-    # trying to read workflow and job folder from config file
+    args,_ = arg_parser().parse_known_args(argsl)
+    status={}
     try:
-        config = ConfigParser.ConfigParser()
-        config_file = argv.config if argv.config else constants.DEFAULT_CONFIG
-        abs_config_file= config_file if os.path.isabs(config_file) else os.path.join(os.getcwd(), config_file)
-        config.read(abs_config_file)
-        argv["workflow_folder"] = config.get('cwl', 'cwl_workflows')
-        argv["job_folder"] = config.get('cwl', 'cwl_jobs')
-        print "workflow_folder and job_folder are set from config file"
-    except ConfigParser.Error:
-        pass
-
-    # trying to get workflow and job folder as arguments
-    try:
-        argv["workflow_folder"]=args.workflow_folder
-        argv["job_folder"] = args.job_folder
-    except:
-        pass
-
-
-
-
-    try:
-        connection = sqlite3.connect(sql_temp_file)
-        run_sql_script(connection, CREATE_REFGENE_TABLE_SCRIPT)
-        header = load_from_file(connection, args.input)
-        export_to_file (header, select_from_db(connection, args.querry, args.order), args.output)
-        connection.close()
+        args = normalize(args)
+        conf=read_config(args.config)
+        status=args.func(args, conf)
     except Exception as ex:
-        print str(ex)
+        status=gen_error_status(args,ex)
+        raise ex
     finally:
-        os.remove(sql_temp_file)
+        if args.output:
+            export_to_file(args.output, status)
+        else:
+            print json.dumps(status, indent=4)
 
 
 if __name__ == "__main__":
