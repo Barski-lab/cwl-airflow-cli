@@ -20,25 +20,6 @@ def get_tasks (uid, db_connection):
     return collected, len(tasks)
 
 
-# def check_job(db_connection, uid, jobs_folder):
-#     """Check status for current job from Airflow DB"""
-#     tasks, total = get_tasks(uid, db_connection)
-#     tasks = {k: v for k,v in tasks.iteritems() if v}
-#     failed_file = os.path.join(jobs_folder, constants.JOBS_FAIL, uid + '.json')
-#     running_file = os.path.join(jobs_folder, constants.JOBS_RUNNING, uid + '.json')
-#     new_file = os.path.join(jobs_folder, constants.JOBS_NEW, uid + '.json')
-#     if not tasks and os.path.isfile(failed_file):
-#         return constants.STATUS["FAIL_PROCESS"], None
-#     elif not tasks and (os.path.isfile(running_file) or os.path.isfile(new_file)):
-#         return constants.STATUS["JOB_CREATED"], None
-#     elif tasks.get("failed"):
-#         return constants.STATUS["FAIL_PROCESS"], tasks
-#     elif total > 0 and len(tasks.get("success", [])) == total: # All the tasks exit with success
-#         return constants.STATUS["SUCCESS_PROCESS"], tasks
-#     else:
-#         return constants.STATUS["PROCESSING"], tasks
-
-
 def check_job(db_connection, uid, jobs_folder):
     """Check status for current job from Airflow DB"""
     tasks, total = get_tasks(uid, db_connection)

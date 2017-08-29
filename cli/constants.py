@@ -1,4 +1,4 @@
-DEFAULT_CONFIG="./airflow_submit.cfg"
+DEFAULT_CONFIG="./airflow_cwl_cli.cfg"
 
 JOBS_NEW = 'new'
 JOBS_SUCCESS = 'success'
