@@ -13,11 +13,10 @@ setup(
     license = 'MIT',
     packages=find_packages(),
     install_requires=[
-        'regex',
-        'MySQL-python',
-        'ConfigParser',
-        'uuid',
-        'ruamel.yaml'
+        'MySQL-python>=1.2.5',
+        'ConfigParser>=3.5.0, <3.6.0',
+        'uuid==1.30',
+        'ruamel.yaml<0.15'
     ],
     zip_safe=False,
     entry_points={
