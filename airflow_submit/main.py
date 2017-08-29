@@ -106,7 +106,7 @@ def main(argsl=None):
         status=args.func(args, conf)
     except Exception as ex:
         status=gen_error_status(args,ex)
-        raise ex
+        sys.exit(1)
     finally:
         if args.output:
             export_to_file(args.output, status)
