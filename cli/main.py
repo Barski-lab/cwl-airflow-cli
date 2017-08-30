@@ -7,7 +7,7 @@ import uuid
 import json
 import connect
 import ruamel.yaml as yaml
-from check_func import check_job
+from airflow_func import check_job, check_time
 
 
 def read_config(config_file):
@@ -18,6 +18,7 @@ def read_config(config_file):
 
 # SubParsers function
 def submit(args, conf):
+    """Submit new job and workflow files to Airflow folders"""
     workflow_dest = os.path.join(conf.get('cwl','cwl_workflows'), args.uid + os.path.splitext(args.workflow)[1])
     job_dest = os.path.join(conf.get('cwl','cwl_jobs'), constants.JOBS_NEW,  args.uid + os.path.splitext(args.job)[1])
     os.rename(args.workflow, workflow_dest)
@@ -28,11 +29,21 @@ def submit(args, conf):
 
 
 def check(args, conf):
+    """Returns the status of the current job by id"""
     db_connection=connect.DbConnect(conf)
     status, tasks = check_job (db_connection, args.uid, conf.get('cwl','cwl_jobs'))
     return {'uid':    args.uid,
             'status': next((status_txt for status_txt,status_code in constants.STATUS.items() if status_code == status), None),
             'tasks':  tasks
+    }
+
+def time(args, conf):
+    """Returns elapsed time for succesfully executed job"""
+    db_connection=connect.DbConnect(conf)
+    real_time, sys_time = check_time (db_connection, args.uid)
+    return {'uid':  args.uid,
+            'real': real_time,
+            'sys':  sys_time
     }
 
 
@@ -83,6 +94,7 @@ def arg_parser():
     subparsers.required = True
     submit_parser = subparsers.add_parser(submit.__name__, help="Submit new job", parents=[parent_parser])
     check_parser =  subparsers.add_parser(check.__name__,  help="Check status by uid", parents=[parent_parser])
+    time_parser = subparsers.add_parser(time.__name__, help="Check time by uid", parents=[parent_parser])
 
     # submit_parser
     submit_parser.add_argument ("-u", "--uid", help="Unique ID for submitted job", default=None)
@@ -93,6 +105,10 @@ def arg_parser():
     # check_parser
     check_parser.add_argument("-u", "--uid", help="Unique ID for submitted job", required=True)
     check_parser.set_defaults(func=check)
+
+    # time parser
+    time_parser.add_argument("-u", "--uid", help="Unique ID for submitted job", required=True)
+    time_parser.set_defaults(func=time)
 
     return general_parser
 
