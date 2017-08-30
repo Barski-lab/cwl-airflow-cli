@@ -31,7 +31,7 @@ def check(args, conf):
     db_connection=connect.DbConnect(conf)
     status, tasks = check_job (db_connection, args.uid, conf.get('cwl','cwl_jobs'))
     return {'uid':    args.uid,
-            'status': status,
+            'status': next((status_txt for status_txt,status_code in constants.STATUS.items() if status_code == status), None),
             'tasks':  tasks
     }
 
@@ -45,10 +45,12 @@ def gen_uid (args):
     try:
         with open(args.job, 'r') as f:
             job = yaml.safe_load(f) or {}
-            uid = job.get("uid") or args.uid or uuid.uuid4()
-            return str(uid)
-    except:
-        return str(args.uid)
+            uid = job.get("uid") or args.uid or str(uuid.uuid4())
+            return uid
+    except IOError as ex: # submit is used, but job is not found
+        raise ex
+    except: # check is used
+        return args.uid
 
 
 def normalize(args):
