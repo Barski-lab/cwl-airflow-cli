@@ -78,7 +78,7 @@ def arg_parser():
     parent_parser.add_argument("-c", "--config", help="Path to configuration file", default=constants.DEFAULT_CONFIG)
 
     # general_parser
-    general_parser = argparse.ArgumentParser(description='Airflow-submit')
+    general_parser = argparse.ArgumentParser(description='airflow-cwl-cli')
     subparsers = general_parser.add_subparsers()
     subparsers.required = True
     submit_parser = subparsers.add_parser(submit.__name__, help="Submit new job", parents=[parent_parser])
