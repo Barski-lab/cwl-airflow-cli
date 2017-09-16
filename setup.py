@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 import os
 
 setup(
-    name='airflow-cwl-cli',
+    name='cwl-airflow-cli',
     description='Python package to add and check status of the submitted to Airflow jobs',
     long_description=open(os.path.join(os.path.dirname(__file__), 'README.md')).read(),
     version='0.0.1',
-    url='https://github.com/Barski-lab/airflow_cwl_cli',
-    download_url=('https://github.com/Barski-lab/airflow_cwl_cli'),
+    url='https://github.com/Barski-lab/cwl-airflow-cli',
+    download_url=('https://github.com/Barski-lab/cwl-airflow-cli.git'),
     author='Michael Kotliar',
     author_email='misha.kotliar@gmail.com',
     license = 'MIT',
@@ -21,7 +21,7 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            "airflow-cwl-cli=cli.main:main"
+            "cwl-airflow-cli=cli.main:main"
         ]
     }
 )
