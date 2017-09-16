@@ -7,7 +7,7 @@ class DbConnect:
     """Class to get access to DB"""
 
     def __init__(self, conf):
-        self.sql_conn_url=urlparse.urlparse(conf.get('db', 'sql_conn'))
+        self.sql_conn_url=urlparse.urlparse(conf.get('core', 'sql_alchemy_conn'))
         self.connect()
 
     def connect(self):
