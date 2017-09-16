@@ -1,8 +1,8 @@
 **usage**
 ```
-usage: airflow-cwl-cli [-h] {submit,check,time} ...
+usage: cwl-airflow-cli [-h] {submit,check,time} ...
 
-airflow-cwl-cli
+cwl-airflow-cli
 
 positional arguments:
   {submit,check,time}
@@ -15,7 +15,7 @@ optional arguments:
 ```  
 **submit**
 ```bash
-usage: airflow-cwl-cli submit [-h] [-o OUTPUT] [-c CONFIG] [-u UID] -w
+usage: cwl-airflow-cli submit [-h] [-o OUTPUT] [-c CONFIG] [-u UID] -w
                               WORKFLOW -j JOB
 
 optional arguments:
@@ -32,7 +32,7 @@ optional arguments:
 **check**
 
 ```bash
-usage: airflow-cwl-cli check [-h] [-o OUTPUT] [-c CONFIG] -u UID
+usage: cwl-airflow-cli check [-h] [-o OUTPUT] [-c CONFIG] -u UID
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -45,7 +45,7 @@ optional arguments:
 **time**
 
 ```bash
-usage: airflow-cwl-cli time [-h] [-o OUTPUT] [-c CONFIG] -u UID
+usage: cwl-airflow-cli time [-h] [-o OUTPUT] [-c CONFIG] -u UID
 
 optional arguments:
   -h, --help            show this help message and exit
